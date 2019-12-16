@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:tf_pdf/tf_pdf.dart';
 
 void main() => runApp(MyApp());
@@ -13,6 +14,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  var text = '';
 
   @override
   void initState() {
@@ -34,18 +36,27 @@ class _MyAppState extends State<MyApp> {
                   var file = await saveByName('images/tagskin${i}.png');
                   imgPaths.add(file.path);
                 }
-                var gifPath = await TfPdf.createPDFByImage(
+                if (Platform.isAndroid) {
+                  var b = await checkAndRequest(PermissionGroup.storage);
+                  if (!b) {
+                    setState(() => text = '（安卓）请求文件存储权限');
+                    return;
+                  }
+                }
+
+                var pdfPath = await TfPdf.createPDFByImage(
                   imgPaths,
                   width: 200,
                   height: 250,
                 );
-                print('gifPath = ${gifPath}');
+                setState(() => text = 'pdfPath = ${pdfPath}');
+                print('pdfPath = ${pdfPath}');
               },
             ),
           ],
         ),
         body: Center(
-          child: Text(''),
+          child: Text(text),
         ),
       ),
     );
@@ -65,5 +76,19 @@ class _MyAppState extends State<MyApp> {
   Future<File> getFile(String name) async {
     var documentsDir = await getApplicationDocumentsDirectory();
     return File("${documentsDir.path}/$name");
+  }
+
+  Future<bool> checkAndRequest(PermissionGroup permissionGroup) async {
+    var permissionHandler = PermissionHandler();
+    var permissionStatus =
+        await permissionHandler.checkPermissionStatus(permissionGroup);
+    if (permissionStatus == PermissionStatus.granted) return true;
+
+    var requestResults =
+        await permissionHandler.requestPermissions([permissionGroup]);
+
+    if (requestResults[permissionGroup] == PermissionStatus.granted)
+      return true;
+    return false;
   }
 }

@@ -13,6 +13,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
   path_provider: 1.2.0
+  permission_handler:
+    git: https://github.com/woodemi/flutter-permission-handler.git
+    version: ^4.0.3
 
 dev_dependencies:
   flutter_test:
